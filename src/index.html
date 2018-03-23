@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>three.js webgl - animation - skinning</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                color: #fff;
+                font-family:Monospace;
+                font-size:13px;
+                text-align:center;
+                background-color: #fff;
+                margin: 0px;
+                overflow: hidden;
+            }
+            #info {
+                position: absolute;
+                top: 0px; width: 100%;
+                padding: 5px;
+            }
+            a {
+                color: #bbb;
+            }
+            .ac {  /* prevent dat-gui from being selected */
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+            .no-pointer-events {
+                pointer-events: none;
+            }
+            .control-disabled {
+                color: #888;
+                text-decoration: line-through;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container"></div>
+        <div id="info">
+            Skeletal Animation Blending (model from <a href="http://realitymeltdown.com" target="_blank" rel="noopener">realitymeltdown.com</a>)
+            <br><br>camera orbit/zoom/pan with left/middle/right mouse button
+            <!-- <br>Note: crossfades are possible with blend weights being set to (1,0,0), (0,1,0) or (0,0,1) -->
+        </div>
+
+        <script src="../js/three.js"></script>
+
+        <script src="../js/Detector.js"></script>
+        <script src="../js/libs/stats.min.js"></script>
+        <script src="../js/controls/OrbitControls.js"></script>
+        <script src="../js/libs/dat.gui.min.js"></script>
+        <script type="text/javascript" src="main.js"></script>
+    </body>
+</html>
