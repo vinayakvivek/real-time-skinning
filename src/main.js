@@ -23,113 +23,151 @@ function init() {
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
 
-
     container.appendChild( renderer.domElement );
 
-    // console.log(camera)
-
-    var material = new THREE.MeshNormalMaterial();
-    var radius = 10
-
     url = '../models/skinned/marine/marine_anims_core.json';
+    // url = '../models/skinned/UCS/umich_ucs.js';
+    // url = '../models/skinned/knight.js';
+    // url = '../models/female/Alicia.max';
+    // url = '../models/woman.fbx';
 
-    new THREE.ObjectLoader().load( url, function ( loadedObject ) {
 
-        console.log(loadedObject)
+    loaderType = 'object'
+    // loaderType = 'json'
+    // loaderType = '3dsmax'
+    // loaderType = 'fbx'
 
-        loadedObject.traverse( function ( child ) {
+    if (loaderType === 'object') {
+        new THREE.ObjectLoader().load( url, function ( loadedObject ) {
 
-            if ( child instanceof THREE.SkinnedMesh ) {
+            loadedObject.traverse( function ( child ) {
+                if ( child instanceof THREE.SkinnedMesh ) {
+                    mesh = child;
+                }
+            } );
 
-                mesh = child;
-
+            if ( mesh === undefined ) {
+                alert( 'Unable to find a SkinnedMesh in this place:\n\n' + url + '\n\n' );
+                return;
             }
 
-        } );
+            setUp();
+        });
+    } else if (loaderType === 'json') {
+        new THREE.JSONLoader().load(url, function (geometry, material) {
+            mesh = new THREE.SkinnedMesh(geometry, material)
 
-        if ( mesh === undefined ) {
+            setUp();
+        });
+    } else if (loaderType === '3dsmax') {
+        new THREE.TDSLoader().load( url, function ( object ) {
+            object.traverse( function ( child ) {
+                if ( child instanceof THREE.SkinnedMesh ) {
+                    // child.material.normalMap = normal;
+                    mesh = child;
+                }
+            });
 
-            alert( 'Unable to find a SkinnedMesh in this place:\n\n' + url + '\n\n' );
-            return;
+            if ( mesh === undefined ) {
+                alert( 'Unable to find a SkinnedMesh in this place:\n\n' + url + '\n\n' );
+                return;
+            }
 
-        }
+            setUp();
+        });
+    } else if (loaderType === 'fbx') {
+        new THREE.FBXLoader().load(url, function (object) {
+            object.traverse( function ( child ) {
+                if ( child instanceof THREE.SkinnedMesh && child.name === 'CC_Base_Body' ) {
+                    // child.material.normalMap = normal;
+                    mesh = child;
+                    setUp();
+                }
+            });
 
-        console.log(mesh)
-
-        var material = mesh.material;
-        material.onBeforeCompile = function ( shader ) {
-
-            console.log( shader );
-
-            shader.vertexShader = shader.vertexShader.replace(
-             '#include <skinbase_vertex>',
-             `
-                mat4 boneMatX = getBoneMatrix( skinIndex.x );
-                mat4 boneMatY = getBoneMatrix( skinIndex.y );
-                mat4 boneMatZ = getBoneMatrix( skinIndex.z );
-                mat4 boneMatW = getBoneMatrix( skinIndex.w );
-             `
-            );
-
-            shader.vertexShader = shader.vertexShader.replace(
-             '#include <skinnormal_vertex>',
-             `
-                mat4 skinMatrix = mat4( 0.0 );
-                skinMatrix += skinWeight.x * boneMatX;
-                skinMatrix += skinWeight.y * boneMatY;
-                skinMatrix += skinWeight.z * boneMatZ;
-                skinMatrix += skinWeight.w * boneMatW;
-                skinMatrix  = bindMatrixInverse * skinMatrix * bindMatrix;
-
-                objectNormal = vec4( skinMatrix * vec4( objectNormal, 0.0 ) ).xyz;
-             `
-            );
-
-            shader.vertexShader = shader.vertexShader.replace(
-             '#include <skinning_vertex>',
-             `
-                vec4 skinVertex = bindMatrix * vec4( transformed, 1.0 );
-
-                vec4 skinned = vec4( 0.0 );
-                skinned += boneMatX * skinVertex * skinWeight.x;
-                skinned += boneMatY * skinVertex * skinWeight.y;
-                skinned += boneMatZ * skinVertex * skinWeight.z;
-                skinned += boneMatW * skinVertex * skinWeight.w;
-
-                transformed = ( bindMatrixInverse * skinned ).xyz;
-             `
-            );
-
-            materialShader = shader;
-        }
-
-        // Add mesh and skeleton helper to scene
-
-        mesh.rotation.y = - 135 * Math.PI / 180;
-        scene.add( mesh );
-
-        skeleton = new THREE.SkeletonHelper( mesh );
-        skeleton.visible = false;
-        scene.add( skeleton );
-
-        // Initialize camera and camera controls
-
-        var radius = mesh.geometry.boundingSphere.radius;
-
-        var aspect = window.innerWidth / window.innerHeight;
-        camera = new THREE.PerspectiveCamera( 45, aspect, 1, 10000 );
-        camera.position.set( 0.0, radius, radius * 3.5 );
-
-        controls = new THREE.OrbitControls( camera, renderer.domElement );
-        controls.target.set( 0, radius, 0 );
-        controls.update();
-
-        setupDatGui();
-    });
+        })
+    }
 
 
     stats = new Stats();
     document.body.appendChild( stats.dom );
+}
+
+function setUp() {
+
+    console.log(mesh);
+
+    var material = mesh.material;
+    material.onBeforeCompile = function ( shader ) {
+
+        console.log( shader );
+
+        shader.vertexShader = shader.vertexShader.replace(
+         '#include <skinbase_vertex>',
+         `
+            mat4 boneMatX = getBoneMatrix( skinIndex.x );
+            mat4 boneMatY = getBoneMatrix( skinIndex.y );
+            mat4 boneMatZ = getBoneMatrix( skinIndex.z );
+            mat4 boneMatW = getBoneMatrix( skinIndex.w );
+         `
+        );
+
+        shader.vertexShader = shader.vertexShader.replace(
+         '#include <skinnormal_vertex>',
+         `
+            mat4 skinMatrix = mat4( 0.0 );
+            skinMatrix += skinWeight.x * boneMatX;
+            skinMatrix += skinWeight.y * boneMatY;
+            skinMatrix += skinWeight.z * boneMatZ;
+            skinMatrix += skinWeight.w * boneMatW;
+            skinMatrix  = bindMatrixInverse * skinMatrix * bindMatrix;
+
+            objectNormal = vec4( skinMatrix * vec4( objectNormal, 0.0 ) ).xyz;
+         `
+        );
+
+        shader.vertexShader = shader.vertexShader.replace(
+         '#include <skinning_vertex>',
+         `
+            vec4 skinVertex = bindMatrix * vec4( transformed, 1.0 );
+
+            vec4 skinned = vec4( 0.0 );
+            skinned += boneMatX * skinVertex * skinWeight.x;
+            skinned += boneMatY * skinVertex * skinWeight.y;
+            skinned += boneMatZ * skinVertex * skinWeight.z;
+            skinned += boneMatW * skinVertex * skinWeight.w;
+
+            transformed = ( bindMatrixInverse * skinned ).xyz;
+         `
+        );
+
+        materialShader = shader;
+    }
+
+    // Add mesh and skeleton helper to scene
+
+    mesh.rotation.y = - 135 * Math.PI / 180;
+    scene.add( mesh );
+
+    skeleton = new THREE.SkeletonHelper( mesh );
+    skeleton.visible = false;
+    scene.add( skeleton );
+
+
+    // Initialize camera and camera controls
+
+    var radius = mesh.geometry.boundingSphere.radius;
+
+    var aspect = window.innerWidth / window.innerHeight;
+    camera = new THREE.PerspectiveCamera( 45, aspect, 1, 10000 );
+    camera.position.set( 0.0, radius, radius * 3.5 );
+
+
+    controls = new THREE.OrbitControls( camera, renderer.domElement );
+    controls.target.set( 0, radius, 0 );
+    controls.update();
+
+    setupDatGui();
 }
 
 function showSkeleton(visibility) {
@@ -147,6 +185,8 @@ function setupDatGui () {
         'show-skeleton': false,
         'show-mesh': true,
     }
+
+    console.log('init contols..')
 
     var folder = gui.addFolder( "General Options" );
     folder.add( settings, 'show-skeleton' ).onChange( showSkeleton );
