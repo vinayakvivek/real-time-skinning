@@ -95,29 +95,10 @@ function init() {
 
 function setUp() {
 
-    console.log(mesh.skeleton.boneInverses);
-
-    var boneInverses = mesh.skeleton.boneInverses;
-
-    // console.log(boneInverses.length)
-    // console.log(boneInverses[1])
-    // console.log(boneInverses[1].getInverse(boneInverses[1]))
-
-    for (var i = 0; i < boneInverses.length; ++i) {
-        boneInverses[i].getInverse(boneInverses[i]);
-    }
-
     var material = mesh.material;
     material.onBeforeCompile = function ( shader ) {
 
         console.log( shader );
-
-
-        shader.uniforms.boneMatrices = { value: mesh.skeleton.boneInverses };
-
-        shader.vertexShader = shader.vertexShader.replace(
-            '#define MAX_BONES 1024',
-            '#define MAX_BONES 60');
 
         shader.vertexShader = shader.vertexShader.replace(
             '#include <skinning_pars_vertex>',
@@ -125,40 +106,40 @@ function setUp() {
             uniform mat4 bindMatrix;
             uniform mat4 bindMatrixInverse;
 
-            // #ifdef BONE_TEXTURE
-            //     uniform sampler2D boneTexture;
-            //     uniform int boneTextureSize;
+            #ifdef BONE_TEXTURE
+                uniform sampler2D boneTexture;
+                uniform int boneTextureSize;
 
-            //     mat4 getBoneMatrix( const in float i ) {
+                mat4 getBoneMatrix( const in float i ) {
 
-            //         float j = i * 4.0;
-            //         float x = mod( j, float( boneTextureSize ) );
-            //         float y = floor( j / float( boneTextureSize ) );
+                    float j = i * 4.0;
+                    float x = mod( j, float( boneTextureSize ) );
+                    float y = floor( j / float( boneTextureSize ) );
 
-            //         float dx = 1.0 / float( boneTextureSize );
-            //         float dy = 1.0 / float( boneTextureSize );
+                    float dx = 1.0 / float( boneTextureSize );
+                    float dy = 1.0 / float( boneTextureSize );
 
-            //         y = dy * ( y + 0.5 );
+                    y = dy * ( y + 0.5 );
 
-            //         vec4 v1 = texture2D( boneTexture, vec2( dx * ( x + 0.5 ), y ) );
-            //         vec4 v2 = texture2D( boneTexture, vec2( dx * ( x + 1.5 ), y ) );
-            //         vec4 v3 = texture2D( boneTexture, vec2( dx * ( x + 2.5 ), y ) );
-            //         vec4 v4 = texture2D( boneTexture, vec2( dx * ( x + 3.5 ), y ) );
+                    vec4 v1 = texture2D( boneTexture, vec2( dx * ( x + 0.5 ), y ) );
+                    vec4 v2 = texture2D( boneTexture, vec2( dx * ( x + 1.5 ), y ) );
+                    vec4 v3 = texture2D( boneTexture, vec2( dx * ( x + 2.5 ), y ) );
+                    vec4 v4 = texture2D( boneTexture, vec2( dx * ( x + 3.5 ), y ) );
 
-            //         mat4 bone = mat4( v1, v2, v3, v4 );
+                    mat4 bone = mat4( v1, v2, v3, v4 );
 
-            //         return bone;
+                    return bone;
 
-            //     }
-            // #else
+                }
+            #else
 
-            uniform mat4 boneMatrices[ MAX_BONES ];
-            mat4 getBoneMatrix( const in float i ) {
-                mat4 bone = boneMatrices[ int(i) ];
-                return bone;
-            }
+                uniform mat4 boneMatrices[ MAX_BONES ];
+                mat4 getBoneMatrix( const in float i ) {
+                    mat4 bone = boneMatrices[ int(i) ];
+                    return bone;
+                }
 
-            // #endif
+            #endif
             `
         );
 
