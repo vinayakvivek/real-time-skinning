@@ -70,11 +70,6 @@ function setUp() {
                 vec4 qr;
                 qr.w = q1.w * q2.w - dot(q1.xyz, q2.xyz);
                 qr.xyz = q1.w * q2.xyz + q2.w * q1.xyz + cross(q1.xyz, q2.xyz);
-
-                // qr.x = (q1.w * q2.x) + (q1.x * q2.w) + (q1.y * q2.z) - (q1.z * q2.y);
-                // qr.y = (q1.w * q2.y) - (q1.x * q2.z) + (q1.y * q2.w) + (q1.z * q2.x);
-                // qr.z = (q1.w * q2.z) + (q1.x * q2.y) - (q1.y * q2.x) + (q1.z * q2.w);
-                // qr.w = (q1.w * q2.w) - (q1.x * q2.x) - (q1.y * q2.y) - (q1.z * q2.z);
                 return qr;
             }
 
@@ -113,14 +108,6 @@ function setUp() {
                 }
 
                 return qr;
-
-                // qr.w = sqrt(1.0 + m[0][0] + m[1][1] + m[2][2]) / 2.0;
-                // float w4 = (4.0 * qr.w);
-                // qr.x = (m[1].z - m[2].y) / w4 ;
-                // qr.y = (m[2].x - m[0].z) / w4 ;
-                // qr.z = (m[0].y - m[1].x) / w4 ;
-                // // qr = qr / length(qr);
-                // return qr;
             }
 
             // dual quaternion
@@ -221,11 +208,6 @@ function setUp() {
         shader.vertexShader = shader.vertexShader.replace(
          '#include <skinbase_vertex>',
          `
-            mat4 boneMatX = getBoneMatrix( skinIndex.x );
-            mat4 boneMatY = getBoneMatrix( skinIndex.y );
-            mat4 boneMatZ = getBoneMatrix( skinIndex.z );
-            mat4 boneMatW = getBoneMatrix( skinIndex.w );
-
             DualQuat boneQX = dquat_from_matrix(getBoneMatrix( skinIndex.x ));
             DualQuat boneQY = dquat_from_matrix(getBoneMatrix( skinIndex.y ));
             DualQuat boneQZ = dquat_from_matrix(getBoneMatrix( skinIndex.z ));
@@ -267,23 +249,9 @@ function setUp() {
         shader.vertexShader = shader.vertexShader.replace(
          '#include <skinning_vertex>',
          `
-            // ----------- DQ
-
             transformed = (bindMatrix * vec4(transformed, 1.0)).xyz;
             transformed = dquat_transform_vertex(transformed, blendedDQ);
             transformed = (bindMatrixInverse * vec4(transformed, 1.0)).xyz;
-
-            // --- DQ2
-
-            // vec4 skinVertex = bindMatrix * vec4( transformed, 1.0 );
-
-            // vec3 skinned = vec3(0.0);
-            // skinned += dquat_transform_vertex((skinVertex * skinWeight.x).xyz, blendedDQ);
-            // skinned += dquat_transform_vertex((skinVertex * skinWeight.y).xyz, blendedDQ);
-            // skinned += dquat_transform_vertex((skinVertex * skinWeight.z).xyz, blendedDQ);
-            // skinned += dquat_transform_vertex((skinVertex * skinWeight.w).xyz, blendedDQ);
-
-            // transformed = ( bindMatrixInverse * vec4(skinned, 1.0) ).xyz;
          `
         );
 
