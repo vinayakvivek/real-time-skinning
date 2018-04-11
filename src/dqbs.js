@@ -260,7 +260,7 @@ function setUp() {
 
     // Add mesh and skeleton helper to scene
 
-    mesh.rotation.y = - 135 * Math.PI / 180;
+    mesh.rotation.y = - 180 * Math.PI / 180;
     scene.add( mesh );
 
     skeleton = new THREE.SkeletonHelper( mesh );
@@ -273,9 +273,8 @@ function setUp() {
     var radius = mesh.geometry.boundingSphere.radius;
 
     var aspect = window.innerWidth / window.innerHeight;
-    camera = new THREE.PerspectiveCamera( 45, aspect, 1, 10000 );
-    camera.position.set( 0.0, radius, radius * 3.5 );
-
+    camera = new THREE.PerspectiveCamera( 30, aspect, 1, 1000 );
+    camera.position.set( 0.0, radius * 2.5, radius * 3.5 );
 
     controls = new THREE.OrbitControls( camera, renderer.domElement );
     controls.target.set( 0, radius, 0 );
@@ -342,17 +341,17 @@ function setupDatGui () {
         var bone = bones[ i ];
         folder = gui.addFolder(bone.name);
 
-        folder.add( bone.rotation, 'x', - Math.PI * 0.5, Math.PI * 0.5 );
-        folder.add( bone.rotation, 'y', - Math.PI * 0.5, Math.PI * 0.5 );
-        folder.add( bone.rotation, 'z', - Math.PI * 0.5, Math.PI * 0.5 );
+        if (bone.name == 'Fbx01_R_Forearm') {
+            bone.rotation.x = 2.0;
+        }
 
-        folder.add( bone.position, 'z', - 10 + bone.position.z, 10 + bone.position.z );
+        folder.add( bone.rotation, 'x', - 5 * Math.PI, 5 * Math.PI );
+        folder.add( bone.rotation, 'y', - 5 * Math.PI, 5 * Math.PI );
+        folder.add( bone.rotation, 'z', - 5 * Math.PI, 5 * Math.PI );
 
         folder.__controllers[ 0 ].name( "rotation.x" );
         folder.__controllers[ 1 ].name( "rotation.y" );
         folder.__controllers[ 2 ].name( "rotation.z" );
-
-        folder.__controllers[ 3 ].name( "position.z" );
     }
 
 }
