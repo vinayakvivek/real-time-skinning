@@ -26,19 +26,25 @@ function init() {
     container.appendChild( renderer.domElement );
 
     url = '../models/skinned/marine/marine_anims_core.json';
+    // url = '../models/test/Peggy/Peggy.fbx';
     // url = '../models/skinned/UCS/umich_ucs.js';
     // url = '../models/skinned/knight.js';
     // url = '../models/female/Alicia.max';
     // url = '../models/woman.fbx';
+
+    // url = '../models/test/male/scene.gltf';
 
 
     loaderType = 'object'
     // loaderType = 'json'
     // loaderType = '3dsmax'
     // loaderType = 'fbx'
+    // loaderType = 'gltf';
 
     if (loaderType === 'object') {
         new THREE.ObjectLoader().load( url, function ( loadedObject ) {
+
+            // console.log(loadedObject)
 
             loadedObject.traverse( function ( child ) {
                 if ( child instanceof THREE.SkinnedMesh ) {
@@ -76,16 +82,60 @@ function init() {
             setUp();
         });
     } else if (loaderType === 'fbx') {
+        console.log('loading');
         new THREE.FBXLoader().load(url, function (object) {
-            object.traverse( function ( child ) {
-                if ( child instanceof THREE.SkinnedMesh && child.name === 'CC_Base_Body' ) {
-                    // child.material.normalMap = normal;
-                    mesh = child;
-                    setUp();
-                }
-            });
+            console.log(object)
+            // object.traverse( function ( child ) {
+            //     if (child instanceof THREE.SkinnedMesh) {
+            //         // child.material.normalMap = normal;
+            //         mesh = child;
+            //         setUp();
+            //     }
 
-        })
+            //     // if ( child instanceof THREE.SkinnedMesh && child.name === 'CC_Base_Body' ) {
+            //     //     // child.material.normalMap = normal;
+            //     //     mesh = child;
+            //     //     setUp();
+            //     // }
+            // });
+
+            scene.add(object)
+
+            // Initialize camera and camera controls
+
+            var radius = 150.0;
+
+            var aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera( 45, aspect, 1, 10000 );
+            camera.position.set( 0.0, radius, radius * 3.5 );
+
+
+            controls = new THREE.OrbitControls( camera, renderer.domElement );
+            controls.target.set( 0, radius, 0 );
+            controls.update();
+
+            setupDatGui();
+
+        });
+    } else if (loaderType == 'gltf') {
+        new THREE.GLTFLoader().load(url, function (object) {
+            console.log(object)
+
+            scene.add(object.scene);
+
+            var radius = 150.0;
+
+            var aspect = window.innerWidth / window.innerHeight;
+            camera = new THREE.PerspectiveCamera( 45, aspect, 1, 10000 );
+            camera.position.set( 0.0, radius, radius * 3.5 );
+
+
+            controls = new THREE.OrbitControls( camera, renderer.domElement );
+            controls.target.set( 0, radius, 0 );
+            controls.update();
+
+            setupDatGui();
+        });
     }
 
 
@@ -93,7 +143,26 @@ function init() {
     document.body.appendChild( stats.dom );
 }
 
+function download(content, fileName, contentType) {
+    var a = document.createElement("a");
+    var file = new Blob([content], {type: contentType});
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
+    a.click();
+}
+
 function setUp() {
+
+    console.log(mesh.geometry);
+
+    var cor_data = {
+        'vertices': mesh.geometry.vertices,
+        'faces': mesh.geometry.faces,
+        'skinIndices': mesh.geometry.skinIndices,
+        'skinWeights': mesh.geometry.skinWeights,
+    }
+
+    download(JSON.stringify(cor_data), 'CORdata.json', 'application/json');
 
     var material = mesh.material;
     material.onBeforeCompile = function ( shader ) {

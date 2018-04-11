@@ -1,3 +1,15 @@
+(function(root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define('three.TDSLoader', ['three'], factory);
+    }
+    else if ('undefined' !== typeof exports && 'undefined' !== typeof module) {
+        module.exports = factory(require('three'));
+    }
+    else {
+        factory(root.THREE);
+    }
+}(this, function(THREE) {
+
 /*
  * Autodesk 3DS threee.js file loader, based on lib3ds.
  *
@@ -72,7 +84,7 @@ THREE.TDSLoader.prototype = {
 
 		this.readFile( arraybuffer, path );
 
-		for ( var i = 0; i &lt, this.meshes.length; i ++ ) {
+		for ( var i = 0; i < this.meshes.length; i ++ ) {
 
 			this.group.add( this.meshes[ i ] );
 
@@ -352,7 +364,7 @@ THREE.TDSLoader.prototype = {
 				if ( useBufferGeometry )	{
 
 					var vertices = [];
-					for ( var i = 0; i &lt, points; i ++ )		{
+					for ( var i = 0; i < points; i ++ )		{
 
 						vertices.push( this.readFloat( data ) );
 						vertices.push( this.readFloat( data ) );
@@ -364,7 +376,7 @@ THREE.TDSLoader.prototype = {
 
 				} else	{ //Geometry
 
-					for ( var i = 0; i &lt, points; i ++ )		{
+					for ( var i = 0; i < points; i ++ )		{
 
 						geometry.vertices.push( new THREE.Vector3( this.readFloat( data ), this.readFloat( data ), this.readFloat( data ) ) );
 
@@ -388,7 +400,7 @@ THREE.TDSLoader.prototype = {
 				if ( useBufferGeometry )	{
 
 					var uvs = [];
-					for ( var i = 0; i &lt; texels; i ++ )		{
+					for ( var i = 0; i < texels; i ++ )		{
 
 						uvs.push( this.readFloat( data ) );
 						uvs.push( this.readFloat( data ) );
@@ -399,7 +411,7 @@ THREE.TDSLoader.prototype = {
 				} else { //Geometry
 
 					uvs = [];
-					for ( var i = 0; i &lt; texels; i ++ )		{
+					for ( var i = 0; i < texels; i ++ )		{
 
 						uvs.push( new THREE.Vector2( this.readFloat( data ), this.readFloat( data ) ) );
 
@@ -412,7 +424,7 @@ THREE.TDSLoader.prototype = {
 				this.debugMessage( '   Tranformation Matrix (TODO)' );
 
 				var values = [];
-				for ( var i = 0; i &lt; 12; i ++ ) {
+				for ( var i = 0; i < 12; i ++ ) {
 
 					values[ i ] = this.readFloat( data );
 
@@ -468,11 +480,11 @@ THREE.TDSLoader.prototype = {
 
 			//geometry.faceVertexUvs[0][faceIndex][vertexIndex]
 
-			if ( uvs.length &gt; 0 ) {
+			if ( uvs.length > 0 ) {
 
 				var faceUV = [];
 
-				for ( var i = 0; i &lt; geometry.faces.length; i ++ ) {
+				for ( var i = 0; i < geometry.faces.length; i ++ ) {
 
 					faceUV.push( [ uvs[ geometry.faces[ i ].a ], uvs[ geometry.faces[ i ].b ], uvs[ geometry.faces[ i ].c ] ] );
 
@@ -504,7 +516,7 @@ THREE.TDSLoader.prototype = {
 
 		this.debugMessage( '   Faces: ' + faces );
 
-		for ( var i = 0; i &lt; faces; ++ i ) {
+		for ( var i = 0; i < faces; ++ i ) {
 
 			mesh.geometry.faces.push( new THREE.Face3( this.readWord( data ), this.readWord( data ), this.readWord( data ) ) );
 
@@ -514,7 +526,7 @@ THREE.TDSLoader.prototype = {
 
 		//The rest of the FACE_ARRAY chunk is subchunks
 
-		while ( this.position &lt; chunk.end ) {
+		while ( this.position < chunk.end ) {
 
 			var chunk = this.readChunk( data );
 
@@ -632,7 +644,7 @@ THREE.TDSLoader.prototype = {
 		this.debugMessage( '         Faces: ' + numFaces );
 
 		var index = [];
-		for ( var i = 0; i &lt; numFaces; ++ i ) {
+		for ( var i = 0; i < numFaces; ++ i ) {
 
 			index.push( this.readWord( data ) );
 
@@ -727,7 +739,7 @@ THREE.TDSLoader.prototype = {
 	 */
 	nextChunk: function ( data, chunk ) {
 
-		if ( chunk.cur &gt;= chunk.end ) {
+		if ( chunk.cur >= chunk.end ) {
 
 			return 0;
 
@@ -872,7 +884,7 @@ THREE.TDSLoader.prototype = {
 
 		var s = '';
 
-		for ( var i = 0; i &lt; maxLength; i ++ ) {
+		for ( var i = 0; i < maxLength; i ++ ) {
 
 			var c = this.readByte( data );
 			if ( ! c ) {
@@ -1140,5 +1152,4 @@ var VIEWPORT_DATA = 0x7011;
 var VIEWPORT_DATA_3 = 0x7012;
 var VIEWPORT_SIZE = 0x7020;
 var NETWORK_VIEW = 0x7030;
-</pre></body></html>Ztext/plainUUTF-8    ( 7 N ` v ” ð ñbabl             
-              br
+}));
