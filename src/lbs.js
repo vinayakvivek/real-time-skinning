@@ -155,14 +155,24 @@ function setUp() {
 
     console.log(mesh.geometry);
 
-    var cor_data = {
-        'vertices': mesh.geometry.vertices,
-        'faces': mesh.geometry.faces,
-        'skinIndices': mesh.geometry.skinIndices,
-        'skinWeights': mesh.geometry.skinWeights,
-    }
+    // faces = [];
+    // t_faces = mesh.geometry.faces;
+    // for (var i = 0; i < t_faces.length; ++i) {
+    //     faces.push({
+    //         'a': t_faces[i]['a'],
+    //         'b': t_faces[i]['b'],
+    //         'c': t_faces[i]['c'],
+    //     })
+    // }
 
-    download(JSON.stringify(cor_data), 'CORdata.json', 'application/json');
+    // var cor_data = {
+    //     'vertices': mesh.geometry.vertices,
+    //     'faces': faces,
+    //     'skinIndices': mesh.geometry.skinIndices,
+    //     'skinWeights': mesh.geometry.skinWeights,
+    // }
+
+    // download(JSON.stringify(cor_data), 'CORdata.json', 'application/json');
 
     var material = mesh.material;
     material.onBeforeCompile = function ( shader ) {
