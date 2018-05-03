@@ -58,7 +58,7 @@ function init() {
         // setUp();
         loadJSON('../cors.json', function(response) {
             jsonresponse = JSON.parse(response);
-            console.log(jsonresponse);
+            // console.log(jsonresponse);
             cors = jsonresponse;
             setUp();
         });
@@ -78,9 +78,78 @@ function setUp() {
 
         console.log( shader );
 
+        shader.vertexShader = 'attribute vec3 cor;\n' + shader.vertexShader;
+
         shader.vertexShader = shader.vertexShader.replace(
             '#include <skinning_pars_vertex>',
             `
+            // quaternion functions
+            vec4 quat_conj(vec4 q) {
+                return vec4(-q.x, -q.y, -q.z, q.w);
+            }
+
+            vec4 quat_mult(vec4 q1, vec4 q2) {
+                vec4 qr;
+                qr.w = q1.w * q2.w - dot(q1.xyz, q2.xyz);
+                qr.xyz = q1.w * q2.xyz + q2.w * q1.xyz + cross(q1.xyz, q2.xyz);
+                return qr;
+            }
+
+            vec4 rot_quat_from_matrix(mat4 m) {
+                vec4 qr;
+                float m00 = m[0].x, m01 = m[1].x, m02 = m[2].x;
+                float m10 = m[0].y, m11 = m[1].y, m12 = m[2].y;
+                float m20 = m[0].z, m21 = m[1].z, m22 = m[2].z;
+
+                float tr = m00 + m11 + m22;
+
+                if (tr > 0.0) {
+                    float S = sqrt(tr + 1.0) * 2.0; // S=4*qw
+                    qr.w = 0.25 * S;
+                    qr.x = (m21 - m12) / S;
+                    qr.y = (m02 - m20) / S;
+                    qr.z = (m10 - m01) / S;
+                } else if ((m00 > m11) && (m00 > m22)) {
+                    float S = sqrt(1.0 + m00 - m11 - m22) * 2.0; // S=4*qx
+                    qr.w = (m21 - m12) / S;
+                    qr.x = 0.25 * S;
+                    qr.y = (m01 + m10) / S;
+                    qr.z = (m02 + m20) / S;
+                } else if (m11 > m22) {
+                    float S = sqrt(1.0 + m11 - m00 - m22) * 2.0; // S=4*qy
+                    qr.w = (m02 - m20) / S;
+                    qr.x = (m01 + m10) / S;
+                    qr.y = 0.25 * S;
+                    qr.z = (m12 + m21) / S;
+                } else {
+                    float S = sqrt(1.0 + m22 - m00 - m11) * 2.0; // S=4*qz
+                    qr.w = (m10 - m01) / S;
+                    qr.x = (m02 + m20) / S;
+                    qr.y = (m12 + m21) / S;
+                    qr.z = 0.25 * S;
+                }
+
+                return qr;
+            }
+
+            mat4 quat_to_matrix(vec4 q) {
+                mat4 m1 = mat4(
+                    vec4(q.w, -1.0*q.z, q.y, -1.0*q.x),
+                    vec4(q.z, q.w, -1.0*q.x, -1.0*q.y),
+                    vec4(-1.0*q.y, q.x, q.w, -1.0*q.z),
+                    vec4(q.x, q.y, q.z, q.w)
+                );
+
+                mat4 m2 = mat4(
+                    vec4(q.w, -1.0*q.z, q.y, q.x),
+                    vec4(q.z, q.w, -1.0*q.x, q.y),
+                    vec4(-1.0*q.y, q.x, q.w, q.z),
+                    vec4(-1.0*q.x, -1.0*q.y, -1.0*q.z, q.w)
+                );
+
+                return m1 * m2;
+            }
+
             uniform mat4 bindMatrix;
             uniform mat4 bindMatrixInverse;
 
@@ -128,6 +197,38 @@ function setUp() {
             mat4 boneMatY = getBoneMatrix( skinIndex.y );
             mat4 boneMatZ = getBoneMatrix( skinIndex.z );
             mat4 boneMatW = getBoneMatrix( skinIndex.w );
+
+            vec4 boneQX = rot_quat_from_matrix(boneMatX);
+            vec4 boneQY = rot_quat_from_matrix(boneMatY);
+            vec4 boneQZ = rot_quat_from_matrix(boneMatZ);
+            vec4 boneQW = rot_quat_from_matrix(boneMatW);
+
+            vec4 blendedQ = vec4(0.0);
+
+            blendedQ = skinWeight.x * boneQX;
+
+            if (dot(blendedQ, boneQY) < 0.0)
+                boneQY = -1.0 * boneQY;
+
+            blendedQ += skinWeight.y * boneQY;
+
+            if (dot(blendedQ, boneQZ) < 0.0)
+                boneQZ = -1.0 * boneQZ;
+
+            blendedQ += skinWeight.z * boneQZ;
+
+            if (dot(blendedQ, boneQW) < 0.0)
+                boneQW = -1.0 * boneQW;
+
+            blendedQ += skinWeight.w * boneQW;
+
+            blendedQ = blendedQ / length(blendedQ);
+            mat4 R = quat_to_matrix(blendedQ);
+
+            R[3] = vec4(0.0, 0.0, 0.0, 1.0);
+            R[1].w = 0.0;
+            R[2].w = 0.0;
+            R[3].w = 0.0;
          `
         );
 
@@ -139,24 +240,32 @@ function setUp() {
             skinMatrix += skinWeight.y * boneMatY;
             skinMatrix += skinWeight.z * boneMatZ;
             skinMatrix += skinWeight.w * boneMatW;
-            skinMatrix  = bindMatrixInverse * skinMatrix * bindMatrix;
+            // skinMatrix  = bindMatrixInverse * skinMatrix * bindMatrix;
 
-            objectNormal = vec4( skinMatrix * vec4( objectNormal, 0.0 ) ).xyz;
+            // objectNormal = vec4(bindMatrixInverse * skinMatrix * bindMatrix * vec4( objectNormal, 0.0 ) ).xyz;
+
+            objectNormal = (bindMatrix * vec4(objectNormal, 0.0)).xyz;
+            objectNormal = (R * vec4(objectNormal, 0.0)).xyz;
+            objectNormal = (bindMatrixInverse * vec4(objectNormal, 0.0)).xyz;
          `
         );
 
+        // **************** TODO *******************
         shader.vertexShader = shader.vertexShader.replace(
          '#include <skinning_vertex>',
          `
-            vec4 skinVertex = bindMatrix * vec4( transformed, 1.0 );
+            // skinMatrix = skinMatrix * bindMatrix;
+            // R = R * bindMatrix;
+            vec3 cor_lbs = (skinMatrix * vec4(cor, 1.0)).xyz;
+            vec3 t = cor_lbs - (R * vec4(cor, 1.0)).xyz;
 
-            vec4 skinned = vec4( 0.0 );
-            skinned += boneMatX * skinVertex * skinWeight.x;
-            skinned += boneMatY * skinVertex * skinWeight.y;
-            skinned += boneMatZ * skinVertex * skinWeight.z;
-            skinned += boneMatW * skinVertex * skinWeight.w;
+            // vec3 skinVertex = (R * vec4(transformed, 1.0)).xyz + t;
+            // transformed = (bindMatrixInverse * vec4(skinVertex, 1.0)).xyz;
 
-            transformed = ( bindMatrixInverse * skinned ).xyz;
+            vec3 skinVertex = (bindMatrix * vec4(transformed, 1.0)).xyz;
+            // skinVertex = (R * vec4(skinVertex, 1.0)).xyz + t;
+            skinVertex = (skinMatrix * vec4(skinVertex, 1.0)).xyz;
+            transformed = (bindMatrixInverse * vec4(skinVertex, 1.0)).xyz;
          `
         );
 
