@@ -4,4 +4,4 @@ Implementation of real-time skinning algorithms using three.js
 ### TODO
 - [x] LBS
 - [x] DQS
-- [ ] Skinning using Optimized CoRs
+- [x] Skinning using Optimized CoRs
